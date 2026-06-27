@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TTB Label Check</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Label Check</h1>
+    <p class="subtitle">Verify an alcohol label against TTB requirements</p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab is-active" id="tab-single" role="tab" aria-selected="true">Check one label</button>
+    <button class="tab" id="tab-batch" role="tab" aria-selected="false">Check many labels</button>
+  </nav>
+
+  <main>
+    <!-- ============ SINGLE ============ -->
+    <section id="panel-single" class="panel">
+      <div class="step">
+        <h2><span class="num">1</span> Choose what to check</h2>
+        <div class="mode-toggle" role="radiogroup" aria-label="Verification mode">
+          <label class="mode-option is-active">
+            <input type="radio" name="mode" value="rules" checked />
+            <span class="mode-title">Check the label is complete</span>
+            <span class="mode-help">Confirms the warning and required info are present and correct.</span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="mode" value="compare" />
+            <span class="mode-title">Compare to the application</span>
+            <span class="mode-help">Type what the application says; we flag anything that doesn't match.</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="step" id="expected-step" hidden>
+        <h2><span class="num">2</span> Type the application details</h2>
+        <p class="hint">Fill in only what you want checked. Leave the rest blank.</p>
+        <div class="fields">
+          <label>Brand name<input type="text" id="exp-brand_name" /></label>
+          <label>Class / type<input type="text" id="exp-class_type" /></label>
+          <label>Alcohol content<input type="text" id="exp-alcohol_content" placeholder="e.g. 45% Alc./Vol." /></label>
+          <label>Net contents<input type="text" id="exp-net_contents" placeholder="e.g. 750 mL" /></label>
+          <label>Producer / bottler<input type="text" id="exp-producer" /></label>
+          <label>Country of origin<input type="text" id="exp-country_of_origin" /></label>
+        </div>
+      </div>
+
+      <div class="step">
+        <h2><span class="num" id="upload-num">2</span> Add the label photo</h2>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Add label image">
+          <input type="file" id="file-single" accept="image/*" hidden />
+          <img id="preview" class="preview" alt="" hidden />
+          <div id="dropzone-empty" class="dropzone-empty">
+            <span class="dz-icon">📷</span>
+            <span class="dz-text">Click to choose a photo, or drag one here</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="verify-btn" class="primary-btn" disabled>Check this label</button>
+
+      <div id="single-status" class="status" hidden></div>
+      <div id="single-result" class="result" hidden></div>
+    </section>
+
+    <!-- ============ BATCH ============ -->
+    <section id="panel-batch" class="panel" hidden>
+      <div class="step">
+        <h2><span class="num">1</span> Add label photos</h2>
+        <p class="hint">Up to 300 at once. Each is checked for completeness and a correct warning.</p>
+        <div class="dropzone" id="dropzone-batch" tabindex="0" role="button" aria-label="Add label images">
+          <input type="file" id="file-batch" accept="image/*" multiple hidden />
+          <div class="dropzone-empty">
+            <span class="dz-icon">🗂️</span>
+            <span class="dz-text" id="batch-count-text">Click to choose photos, or drag them here</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="verify-batch-btn" class="primary-btn" disabled>Check all labels</button>
+
+      <div id="batch-status" class="status" hidden></div>
+      <div id="batch-summary" class="batch-summary" hidden></div>
+      <div id="batch-result" class="result" hidden></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span id="backend-note"></span>
+    Prototype — no images are stored.
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

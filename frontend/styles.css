@@ -1,0 +1,172 @@
+/* Dead-simple, high-contrast, large-target UI. Built for mixed tech comfort. */
+:root {
+  --ink: #1a1a1a;
+  --muted: #5c5c5c;
+  --line: #d4d4d4;
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --blue: #0b5fff;
+  --blue-dark: #0848c4;
+  --pass: #1a7f37;
+  --pass-bg: #e6f4ea;
+  --fail: #b42318;
+  --fail-bg: #fdecea;
+  --warn: #9a6700;
+  --warn-bg: #fdf3d8;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.site-header {
+  text-align: center;
+  padding: 28px 16px 12px;
+}
+.site-header h1 { margin: 0; font-size: 34px; }
+.subtitle { margin: 4px 0 0; color: var(--muted); font-size: 18px; }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  max-width: 760px;
+  margin: 16px auto 0;
+  padding: 0 16px;
+}
+.tab {
+  flex: 1;
+  padding: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--muted);
+}
+.tab.is-active {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: #eef3ff;
+}
+
+main { max-width: 760px; margin: 0 auto; padding: 16px; }
+
+.step {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.step h2 { margin: 0 0 14px; font-size: 21px; display: flex; align-items: center; gap: 10px; }
+.num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-size: 16px; font-weight: 700;
+}
+.hint { margin: -6px 0 14px; color: var(--muted); font-size: 16px; }
+
+.mode-toggle { display: grid; gap: 12px; }
+.mode-option {
+  display: grid; gap: 2px;
+  border: 2px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px 14px 46px; position: relative; cursor: pointer;
+}
+.mode-option.is-active { border-color: var(--blue); background: #eef3ff; }
+.mode-option input { position: absolute; left: 16px; top: 18px; width: 20px; height: 20px; }
+.mode-title { font-weight: 700; }
+.mode-help { color: var(--muted); font-size: 16px; }
+
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fields label { display: grid; gap: 6px; font-weight: 600; font-size: 16px; }
+.fields input {
+  padding: 12px; font-size: 17px; border: 2px solid var(--line);
+  border-radius: 8px; font-family: inherit;
+}
+.fields input:focus, .dropzone:focus { outline: 3px solid #9bbcff; border-color: var(--blue); }
+
+.dropzone {
+  border: 3px dashed var(--line); border-radius: var(--radius);
+  background: #fafbfc; padding: 28px; text-align: center; cursor: pointer;
+}
+.dropzone.dragover { border-color: var(--blue); background: #eef3ff; }
+.dropzone-empty { display: grid; gap: 10px; justify-items: center; color: var(--muted); }
+.dz-icon { font-size: 40px; }
+.dz-text { font-size: 18px; }
+.preview { max-height: 260px; max-width: 100%; border-radius: 8px; }
+
+.primary-btn {
+  width: 100%; padding: 18px; font-size: 21px; font-weight: 700;
+  color: #fff; background: var(--blue); border: none;
+  border-radius: var(--radius); cursor: pointer;
+}
+.primary-btn:hover:not(:disabled) { background: var(--blue-dark); }
+.primary-btn:disabled { background: #9fb6e0; cursor: not-allowed; }
+
+.status {
+  margin-top: 16px; padding: 14px 16px; border-radius: var(--radius);
+  background: #eef3ff; color: var(--blue-dark); font-weight: 600; text-align: center;
+}
+.status.error { background: var(--fail-bg); color: var(--fail); }
+
+.result { margin-top: 16px; }
+.verdict-banner {
+  padding: 18px; border-radius: var(--radius); font-size: 22px; font-weight: 800;
+  text-align: center; margin-bottom: 14px;
+}
+.verdict-banner.pass { background: var(--pass-bg); color: var(--pass); }
+.verdict-banner.fail { background: var(--fail-bg); color: var(--fail); }
+.verdict-banner.unreadable { background: var(--warn-bg); color: var(--warn); }
+.elapsed { font-size: 14px; font-weight: 600; color: var(--muted); display: block; margin-top: 4px; }
+
+.check {
+  display: grid; grid-template-columns: 34px 1fr; gap: 12px;
+  padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: 10px; margin-bottom: 10px; background: var(--card);
+}
+.check .icon { font-size: 22px; line-height: 1.3; }
+.check.pass { border-left: 6px solid var(--pass); }
+.check.fail { border-left: 6px solid var(--fail); }
+.check.warn { border-left: 6px solid var(--warn); }
+.check .field-name { font-weight: 700; }
+.check .reason { color: var(--muted); font-size: 16px; }
+.check .detail { font-size: 15px; color: var(--muted); margin-top: 4px; }
+.check .detail b { color: var(--ink); }
+
+.batch-summary {
+  display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
+}
+.summary-pill {
+  flex: 1; min-width: 120px; text-align: center; padding: 14px;
+  border-radius: var(--radius); font-weight: 700; font-size: 17px;
+}
+.summary-pill .big { display: block; font-size: 30px; }
+.summary-pill.pass { background: var(--pass-bg); color: var(--pass); }
+.summary-pill.fail { background: var(--fail-bg); color: var(--fail); }
+.summary-pill.unreadable { background: var(--warn-bg); color: var(--warn); }
+
+table.batch-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: var(--card); }
+table.batch-table th, table.batch-table td {
+  text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 16px;
+}
+table.batch-table th { cursor: pointer; user-select: none; background: #f0f2f5; }
+.pill { padding: 3px 10px; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.pill.pass { background: var(--pass-bg); color: var(--pass); }
+.pill.fail { background: var(--fail-bg); color: var(--fail); }
+.pill.unreadable { background: var(--warn-bg); color: var(--warn); }
+
+.site-footer { text-align: center; color: var(--muted); font-size: 14px; padding: 24px; }
+
+@media (max-width: 560px) {
+  .fields { grid-template-columns: 1fr; }
+  body { font-size: 17px; }
+}
