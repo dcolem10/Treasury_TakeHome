@@ -38,11 +38,19 @@ docker info >/dev/null 2>&1       || { echo "ERROR: Docker daemon not running. S
 aws sts get-caller-identity >/dev/null 2>&1 || { echo "ERROR: AWS credentials not configured. Run: aws configure"; exit 1; }
 : "${ANTHROPIC_API_KEY:?ERROR: export ANTHROPIC_API_KEY before running (it is never written to the repo).}"
 
+# Docker Desktop installed at "User" scope (no admin password) does not create the default
+# /var/run/docker.sock that lightsailctl expects. Point the tooling at the user socket.
+if [ ! -S /var/run/docker.sock ] && [ -S "$HOME/.docker/run/docker.sock" ]; then
+  export DOCKER_HOST="unix://$HOME/.docker/run/docker.sock"
+  echo "==> Using user Docker socket: $DOCKER_HOST"
+fi
+
 echo "==> Deploying '$SERVICE_NAME' to Lightsail in $REGION (power=$POWER, scale=$SCALE)"
 
-# ---- 1. Build the image (force amd64 — Lightsail runs x86_64) ----------------
+# ---- 1. Build the image (force amd64 + single plain manifest for Lightsail) ---
+# --provenance=false avoids the multi-manifest/attestation list that lightsailctl can't push.
 echo "==> Building Docker image ($IMAGE_LOCAL) for linux/amd64 ..."
-docker build --platform linux/amd64 -t "$IMAGE_LOCAL" "$ROOT"
+docker build --platform linux/amd64 --provenance=false -t "$IMAGE_LOCAL" "$ROOT"
 
 # ---- 2. Create the container service if it doesn't exist ---------------------
 if aws lightsail get-container-services --service-name "$SERVICE_NAME" --region "$REGION" >/dev/null 2>&1; then
