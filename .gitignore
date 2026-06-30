@@ -22,3 +22,6 @@ env/
 # Uploads / scratch
 /tmp_uploads/
 *.log
+
+# Deploy: never commit a containers spec that may hold the API key
+deploy/containers*.json
