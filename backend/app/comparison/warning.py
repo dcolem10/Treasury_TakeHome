@@ -25,8 +25,19 @@ def _collapse(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def validate_warning(found: str | None) -> WarningResult:
-    """Judge a transcribed warning string against the statutory requirement."""
+def validate_warning(
+    found: str | None,
+    is_bold: bool | None = None,
+    prominence: str | None = None,
+) -> WarningResult:
+    """Judge a transcribed warning string against the statutory requirement.
+
+    `is_bold` / `prominence` are optional visual signals from the extraction backend.
+    Text/caps errors are hard fails. When the text is correct but the warning looks
+    non-bold, shrunk, or buried, we return a **warn** — TTB requires bold + a minimum
+    type size, but these visual reads are heuristic, so we flag for the agent's eye
+    rather than auto-rejecting. See docs/RULES.md.
+    """
     if not found or not found.strip():
         return WarningResult("fail", "Government Warning statement not found on the label.")
 
@@ -45,18 +56,31 @@ def validate_warning(found: str | None) -> WarningResult:
         )
 
     # 2) The full body must match the canonical statement exactly (after whitespace collapse).
-    if collapsed == _CANONICAL:
-        return WarningResult("pass", "Government Warning matches the required statement exactly.")
-
-    # Distinguish "right words, minor OCR noise" from "wrong text" using a case-insensitive
-    # compare of the remainder — but any real difference is still a fail (strict field).
-    if collapsed.lower() == _CANONICAL.lower():
+    if collapsed != _CANONICAL:
+        if collapsed.lower() == _CANONICAL.lower():
+            return WarningResult(
+                "fail",
+                "Warning wording matches but capitalization differs from the required text.",
+            )
         return WarningResult(
             "fail",
-            "Warning wording matches but capitalization differs from the required text.",
+            "Warning text does not match the required statement word-for-word.",
         )
 
-    return WarningResult(
-        "fail",
-        "Warning text does not match the required statement word-for-word.",
-    )
+    # 3) Text is exact. Now flag prominence problems (bold / size / burying).
+    issues = []
+    if prominence in ("small", "buried"):
+        issues.append(
+            "the warning looks smaller or less prominent than required"
+            if prominence == "small"
+            else "the warning appears buried in other text"
+        )
+    if is_bold is False:
+        issues.append("'GOVERNMENT WARNING:' does not appear bold")
+    if issues:
+        return WarningResult(
+            "warn",
+            "Warning text is correct, but " + "; ".join(issues) + " — please verify by eye.",
+        )
+
+    return WarningResult("pass", "Government Warning matches the required statement exactly.")

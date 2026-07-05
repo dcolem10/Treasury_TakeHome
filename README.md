@@ -9,7 +9,10 @@ then checks it against TTB requirements — brand name, alcohol content, require
   anything that doesn't match, forgiving trivial differences like `STONE'S THROW` vs
   `Stone's Throw`.
 
-It also handles **batch uploads** (up to 300 labels at once) with a sortable pass/fail table.
+It also handles **batch uploads** (up to 300 labels at once) with a sortable pass/fail table,
+optional **application-manifest** matching (compare each label to a CSV of application data),
+and **CSV / print export** of results. Warnings that are correct-but-buried are flagged, and
+messy (angled/glare/dim) photos are read with a quality caveat instead of being rejected.
 
 > The original take-home brief is preserved at [`docs/ASSIGNMENT.md`](docs/ASSIGNMENT.md).
 
@@ -72,21 +75,23 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/RULES.md`](docs/RULES
 |-----------------------------------|--------------|
 | Results in **≤ 5 seconds** | One vision call per label; deterministic verdict is sub-ms. Elapsed time is shown on every result. |
 | **Anyone can use it** (mixed tech comfort, 50+) | One screen, big targets, plain-language pass/fail, no jargon. |
-| **Batch** for big importers | Up to 300 files, processed concurrently, sortable results table. |
+| **Batch** for big importers | Up to 300 files, processed concurrently, sortable results table, plus manifest matching + CSV/print export. |
 | **Strict warning** check | Never fuzzy-matched; title-case `Government Warning` fails by design. |
+| **Buried / shrunk warnings** | Correct-but-non-prominent warnings are flagged for review, not silently passed. |
 | Agent **judgment** on trivial diffs | Fuzzy matching forgives case/punctuation/spacing on brand/type. |
-| **Bad photos** | Unreadable images return a clear "resubmit a clearer photo" message, not a crash. |
+| **Bad photos** | Angled/glare/dim images are read with a quality note; truly unreadable ones get a clear "resubmit" message, not a crash. |
 | **Firewall** in production | Cloud backend is swappable for a local Tesseract backend via `EXTRACTION_BACKEND`. |
 
 ## Assumptions & limitations
 
 - **Cloud for the prototype.** Production needs an on-prem/air-gapped model behind the same
   `ExtractionBackend` interface (TTB blocks cloud-ML endpoints; FedRAMP). Documented, not built.
-- **Bold** isn't reliably recoverable from OCR text, so the warning check enforces ALL-CAPS
-  prefix + exact wording; bold is a known gap.
+- **Prominence & image quality are heuristic.** Warning bold/size/burying and photo quality
+  are judgment reads from the vision model, surfaced as `warn` / notes rather than exact
+  measurements — flags for the agent's eye, not authoritative rejections.
 - Beverage-type-specific ABV exceptions (beer/wine) are modeled simply.
 - Country of origin absent → a **warning**, not a failure (import status is unknown in v1).
-- Batch v1 runs rule-check only (no per-file expected values).
+- Manifest compare matches images to CSV rows by filename; agents export results via CSV/print.
 - No persistence — images are processed in memory and discarded (PII-safe).
 
 ## Project layout

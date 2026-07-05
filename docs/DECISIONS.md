@@ -30,6 +30,28 @@ Append new decisions at the top. Each entry: context → decision → consequenc
   not reliably recoverable from OCR text, so the prototype enforces ALL-CAPS prefix + exact
   wording and notes bold as a known limitation.
 
+## D8 — Warning prominence is a "warn", not a hard fail
+- **Context:** Jenny flagged people shrinking/burying/de-bolding the warning. TTB requires
+  bold + minimum type size, but we can't measure millimeters from a photo, and bold/size
+  reads from vision are less certain than the caps/text checks.
+- **Decision:** Text/caps errors stay hard fails. When text is exact but the warning looks
+  non-bold, small, or buried, return **warn** with a clear reason so the agent eyeballs it.
+- **Consequence:** Closes the earlier "bold is a known gap" limitation without risking false
+  rejections. The signals come from the vision backend and need live confirmation.
+
+## D7 — Messy photos are read, not bounced
+- **Decision:** The extraction prompt instructs the model to read angled/glare/dim labels
+  when possible and only declare `unreadable` when truly illegible; `marginal` reads still
+  produce a verdict plus a `quality_note`.
+- **Consequence:** Fewer needless rejections (Dave/Jenny's pain), with a visible caveat.
+
+## D6 — Batch compares against an uploaded manifest CSV
+- **Context:** Importers dump 200–300 applications at once; batch previously only rule-checked.
+- **Decision:** Accept an optional application-manifest CSV; match rows to images by filename
+  and run compare mode per matched file, rule-check otherwise. Reuses `compare_to_fields`.
+- **Consequence:** Batch now serves the full "verify against the application" workflow, not
+  just completeness. Results are exportable (CSV/print) for the agent's queue.
+
 ## D5 — No persistence (PII-safe prototype)
 - **Decision:** Images processed in-memory and discarded; nothing stored.
 - **Consequence:** Matches Marcus's "we're not storing anything sensitive" guidance; revisit for
@@ -38,4 +60,5 @@ Append new decisions at the top. Each entry: context → decision → consequenc
 ## Assumptions / known simplifications
 - Beverage-type-specific rules (beer/wine/spirits ABV exceptions) modeled at a basic level.
 - Country-of-origin absence is a `warn`, not a hard fail, since import status is unknown in v1.
-- Batch v1 runs rule-check only (no per-file expected values).
+- Warning prominence (bold/size/burying) and image quality are heuristic reads from the
+  vision model, surfaced as `warn` / notes rather than authoritative measurements.

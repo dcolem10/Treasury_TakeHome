@@ -166,7 +166,38 @@ table.batch-table th { cursor: pointer; user-select: none; background: #f0f2f5; 
 
 .site-footer { text-align: center; color: var(--muted); font-size: 14px; padding: 24px; }
 
+.optional { font-size: 15px; font-weight: 400; color: var(--muted); }
+.hint code {
+  background: #eef1f5; padding: 1px 5px; border-radius: 4px; font-size: 14px;
+}
+.file-pick {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 16px;
+}
+.file-pick input { font-size: 16px; }
+
+.quality-note {
+  background: var(--warn-bg); color: var(--warn); font-weight: 600;
+  padding: 12px 14px; border-radius: 10px; margin-bottom: 12px;
+}
+
+.toolbar { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.secondary-btn {
+  padding: 12px 18px; font-size: 16px; font-weight: 700; cursor: pointer;
+  background: #fff; color: var(--blue-dark); border: 2px solid var(--blue);
+  border-radius: 10px;
+}
+.secondary-btn:hover { background: #eef3ff; }
+
 @media (max-width: 560px) {
   .fields { grid-template-columns: 1fr; }
   body { font-size: 17px; }
+}
+
+/* Print: just the results table + summary, no chrome. */
+@media print {
+  .site-header, .tabs, .site-footer, .dropzone, .step, .primary-btn,
+  .toolbar, .status, #panel-single { display: none !important; }
+  body { background: #fff; }
+  .batch-summary { display: flex; }
+  table.batch-table th { background: #fff; }
 }

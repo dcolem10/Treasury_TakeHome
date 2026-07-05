@@ -138,18 +138,30 @@ def build_verdict(
     else:
         checks = rule_check(extraction)
 
+    quality_note = None
+    if extraction.image_quality == "marginal":
+        quality_note = (
+            "This photo was low quality (angle, glare, or lighting). The reading may be "
+            "imperfect — double-check anything that looks off."
+        )
+
     return Verdict(
         overall=_overall(checks),  # type: ignore[arg-type]
         readable=True,
         mode=mode,  # type: ignore[arg-type]
         checks=checks,
         extracted=_extracted_model(extraction),
+        quality_note=quality_note,
     )
 
 
 def _warning_check(extraction: LabelExtraction) -> CheckResult:
     found = extraction.get("government_warning")
-    result = validate_warning(found)
+    result = validate_warning(
+        found,
+        is_bold=extraction.warning_is_bold,
+        prominence=extraction.warning_prominence,
+    )
     return _row("government_warning", result.status, result.reason, found=found)
 
 

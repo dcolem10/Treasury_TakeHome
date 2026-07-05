@@ -29,7 +29,13 @@ _INSTRUCTION = (
     "- country_of_origin (or null if not present)\n"
     "- government_warning (transcribe the FULL warning statement EXACTLY as printed, preserving "
     "capitalization and punctuation; null if absent)\n"
+    "- warning_is_bold (true/false/null — does the 'GOVERNMENT WARNING:' heading appear bold?)\n"
+    "- warning_prominence ('prominent' | 'small' | 'buried' | null — is the warning a readable "
+    "size and clearly separated, unusually small, or hidden/blended into other text?)\n"
+    "- image_quality ('clear' | 'marginal' | 'unreadable' — 'marginal' if angled, glare, or dim "
+    "but you can still read most text; 'unreadable' only if you truly cannot read the label)\n"
     "- readable (true if the label text is legible, false if the image is too blurry/dark/angled to read)\n\n"
+    "Do your best to read labels shot at an angle, with glare, or in poor light before giving up. "
     "Return only the JSON object, no prose, no markdown fences."
 )
 
@@ -94,7 +100,8 @@ class ClaudeVisionBackend(ExtractionBackend):
                 error="Could not parse extraction output.",
             )
 
-        readable = bool(data.get("readable", True))
+        quality = _clean(data.get("image_quality"))
+        readable = bool(data.get("readable", True)) and quality != "unreadable"
         fields = {key: _clean(data.get(key)) for key in EXTRACTION_FIELDS}
         if readable and not any(fields.values()):
             readable = False
@@ -104,6 +111,12 @@ class ClaudeVisionBackend(ExtractionBackend):
             fields=fields,
             raw_text=text,
             error=None if readable else "Label text could not be read clearly.",
+            warning_is_bold=data.get("warning_is_bold") if isinstance(
+                data.get("warning_is_bold"), bool
+            ) else None,
+            warning_prominence=quality_or_none(_clean(data.get("warning_prominence")),
+                                               {"prominent", "small", "buried"}),
+            image_quality=quality_or_none(quality, {"clear", "marginal", "unreadable"}),
         )
 
 
@@ -112,6 +125,14 @@ def _clean(value: object) -> Optional[str]:
         return None
     text = str(value).strip()
     return text or None
+
+
+def quality_or_none(value: Optional[str], allowed: set[str]) -> Optional[str]:
+    """Keep an enum-like value only if it's one the app understands."""
+    if value is None:
+        return None
+    v = value.strip().lower()
+    return v if v in allowed else None
 
 
 def _parse_json(text: str) -> Optional[dict]:

@@ -21,7 +21,23 @@ Normalize whitespace (collapse runs, including newlines) before comparing, then 
    on the prefix, case-insensitive tolerance is NOT applied to the prefix).
    - Missing → **fail** "Government Warning statement not found".
    - Reworded / partial → **fail** "Warning text does not match the required statement".
-3. Pass only when prefix-caps AND exact-body both hold.
+3. **Prominence** (visual signals from the extraction backend, optional). When text + caps
+   are correct but the warning appears **not bold**, **unusually small**, or **buried** in
+   other text → **warn** (not fail). TTB requires bold + a minimum type size, but these
+   visual reads are heuristic, so we flag for the agent's eye rather than auto-rejecting.
+4. Pass only when prefix-caps AND exact-body hold AND no prominence issue is flagged.
+
+## Image quality (messy-photo handling)
+The extraction backend reports `image_quality`: `clear` | `marginal` | `unreadable`.
+- `unreadable` → the whole verdict short-circuits to a clear "resubmit a clearer photo".
+- `marginal` (angle/glare/dim but legible) → the label is still evaluated, and the verdict
+  carries a non-blocking `quality_note` telling the agent to double-check. The extraction
+  prompt explicitly instructs the model to try hard before declaring a photo unreadable.
+
+## Application manifest (batch compare)
+`app/manifest.py` parses an optional CSV of expected values and matches rows to uploaded
+images by filename (case-insensitive, path-insensitive). Matched images run compare mode;
+unmatched images run rule-check. Only `filename` is required; blank cells are not checked.
 
 ## Required fields (rule-check mode)
 Per the brief; some are beverage-type dependent (noted as a prototype simplification):

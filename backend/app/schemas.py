@@ -37,6 +37,8 @@ class Verdict(BaseModel):
     extracted: ExtractedFields = ExtractedFields()
     elapsed_ms: int = 0
     error: Optional[str] = None
+    # Non-blocking note when the image was readable but marginal quality.
+    quality_note: Optional[str] = None
 
 
 class BatchItem(BaseModel):
