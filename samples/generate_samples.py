@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageEnhance, ImageFont
 
 OUT = Path(__file__).resolve().parent
 FONT_DIR = "/usr/share/fonts/truetype/dejavu"
@@ -45,7 +45,8 @@ def wrap(draw, text, fnt, max_w):
     return lines
 
 
-def make_label(filename: str, *, brand, class_type, abv, net, producer, warning, origin=None):
+def make_label(filename: str, *, brand, class_type, abv, net, producer, warning,
+               origin=None, warning_size=20, save=True):
     img = Image.new("RGB", (W, H), CREAM)
     d = ImageDraw.Draw(img)
     d.rectangle([18, 18, W - 18, H - 18], outline=INK, width=4)
@@ -70,13 +71,16 @@ def make_label(filename: str, *, brand, class_type, abv, net, producer, warning,
 
     # Warning block at the bottom (smaller text, as on real labels).
     if warning:
+        wf = font("DejaVuSans.ttf", warning_size)
         wy = H - 270
-        for line in wrap(d, warning, font("DejaVuSans.ttf", 20), W - 120):
-            d.text((60, wy), line, font=font("DejaVuSans.ttf", 20), fill=INK)
-            wy += 28
+        for line in wrap(d, warning, wf, W - 120):
+            d.text((60, wy), line, font=wf, fill=INK)
+            wy += warning_size + 8
 
-    img.save(OUT / filename)
-    print("wrote", filename)
+    if save:
+        img.save(OUT / filename)
+        print("wrote", filename)
+    return img
 
 
 BASE = dict(
@@ -114,3 +118,20 @@ make_label(
     producer="Bottled by Stone's Throw Spirits, Asheville, NC",
     warning=WARNING,
 )
+
+# 6) Correct warning text but printed tiny -> prominence WARN (text OK, looks small).
+#    (Vision-dependent: confirms F2 on the live deployment.)
+make_label("06_tiny_warning.png", warning=WARNING, warning_size=9, **BASE)
+
+# 7) Compliant label degraded: rotated + lower contrast + glare -> messy-photo handling.
+#    Should still read (image_quality "marginal") rather than bounce. Confirm F4 live.
+clean = make_label("07_low_quality.png", warning=WARNING, save=False, **BASE)
+clean = ImageEnhance.Contrast(clean).enhance(0.55)
+clean = ImageEnhance.Brightness(clean).enhance(1.15)
+glare = Image.new("RGB", clean.size, (255, 255, 255))
+mask = Image.new("L", clean.size, 0)
+ImageDraw.Draw(mask).ellipse([420, 120, 900, 620], fill=110)
+clean = Image.composite(glare, clean, mask)
+clean = clean.rotate(-8, expand=True, fillcolor=(30, 30, 30))
+clean.save(OUT / "07_low_quality.png")
+print("wrote 07_low_quality.png")

@@ -44,4 +44,39 @@ done
 
 echo "---"
 echo "$matched matched, $missed mismatched"
-[ "$missed" -eq 0 ] || exit 1
+
+# Vision-judgment samples (informational — depend on the live model, not asserted).
+echo
+echo "== Vision-judgment samples (informational) =="
+for file in 06_tiny_warning.png 07_low_quality.png; do
+  resp="$(curl -sS -X POST "$BASE/api/verify" -F "image=@$DIR/$file" -F "mode=rules")"
+  printf '%s\n' "$resp" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+warn = next((c for c in d.get('checks', []) if c['field']=='government_warning'), {})
+print('  $file -> overall=%s warning=%s quality_note=%s'
+      % (d.get('overall'), warn.get('status'), bool(d.get('quality_note'))))
+"
+done
+
+# Batch + application manifest.
+echo
+echo "== Batch + manifest =="
+curl -sS -X POST "$BASE/api/verify-batch" \
+  -F "images=@$DIR/01_compliant.png" \
+  -F "images=@$DIR/05_other_brand.png" \
+  -F "images=@$DIR/03_missing_warning.png" \
+  -F "manifest=@$DIR/manifest_example.csv" \
+| python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+print('  count=%s passed=%s failed=%s unreadable=%s (%sms)'
+      % (d['count'], d['passed'], d['failed'], d['unreadable'], d['elapsed_ms']))
+for i in d['results']:
+    v = i['verdict']
+    print('   %-28s %-8s (%s)' % (i['filename'], v['overall'], v['mode']))
+"
+
+echo
+[ "$missed" -eq 0 ] || { echo 'Rule-check assertions FAILED'; exit 1; }
+echo 'Rule-check assertions passed.'

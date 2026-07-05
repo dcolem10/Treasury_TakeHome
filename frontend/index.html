@@ -81,10 +81,28 @@
         </div>
       </div>
 
+      <div class="step">
+        <h2><span class="num">2</span> Application list <span class="optional">(optional)</span></h2>
+        <p class="hint">
+          Add a CSV of what each application says and we'll compare every matching label to it.
+          Columns: <code>filename, brand_name, class_type, alcohol_content, net_contents, producer, country_of_origin</code>.
+          Labels with no matching row are just checked for completeness.
+          <a href="/manifest_template.csv" download>Download a template</a>.
+        </p>
+        <label class="file-pick">
+          <input type="file" id="file-manifest" accept=".csv,text/csv" />
+          <span id="manifest-name">No CSV chosen</span>
+        </label>
+      </div>
+
       <button id="verify-batch-btn" class="primary-btn" disabled>Check all labels</button>
 
       <div id="batch-status" class="status" hidden></div>
       <div id="batch-summary" class="batch-summary" hidden></div>
+      <div id="batch-toolbar" class="toolbar" hidden>
+        <button id="download-csv" class="secondary-btn">⬇︎ Download results (CSV)</button>
+        <button id="print-results" class="secondary-btn">🖨 Print</button>
+      </div>
       <div id="batch-result" class="result" hidden></div>
     </section>
   </main>

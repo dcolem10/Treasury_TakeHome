@@ -14,6 +14,7 @@ from .comparison.compare import build_verdict
 from .config import settings
 from .extraction import get_backend
 from .extraction.base import LabelExtraction
+from .manifest import match_expected, parse_manifest
 from .rules import EXTRACTION_FIELDS
 from .schemas import BatchItem, BatchResponse, Verdict
 
@@ -81,6 +82,7 @@ async def verify(
 async def verify_batch(
     images: list[UploadFile] = File(...),
     mode: str = Form("rules"),
+    manifest: Optional[UploadFile] = File(None),
 ) -> BatchResponse:
     if not images:
         raise HTTPException(status_code=400, detail="No images uploaded.")
@@ -88,8 +90,15 @@ async def verify_batch(
         raise HTTPException(
             status_code=413, detail=f"Batch limited to {MAX_BATCH_FILES} images."
         )
-    # Batch v1 runs rule-check (no per-file expected values).
-    mode = "rules"
+
+    # If a manifest CSV is supplied, each matching image is compared to its row
+    # (compare mode); unmatched images fall back to rule-check.
+    manifest_map: dict[str, dict[str, str]] = {}
+    if manifest is not None:
+        try:
+            manifest_map = parse_manifest(await manifest.read())
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Manifest error: {exc}")
 
     started = time.perf_counter()
     payloads = [(img.filename or "image", await img.read(), img.content_type) for img in images]
@@ -98,15 +107,17 @@ async def verify_batch(
 
     async def process(filename: str, data: bytes, content_type: Optional[str]) -> BatchItem:
         async with semaphore:
+            expected = match_expected(manifest_map, filename)
+            item_mode = "compare" if expected else "rules"
             if not data:
                 verdict = Verdict(
-                    overall="unreadable", readable=False, mode="rules",
+                    overall="unreadable", readable=False, mode=item_mode,
                     error="Empty file.",
                 )
             else:
                 item_start = time.perf_counter()
                 extraction = await _extract(data, content_type or "image/jpeg")
-                verdict = build_verdict(extraction, "rules")
+                verdict = build_verdict(extraction, item_mode, expected)
                 verdict.elapsed_ms = int((time.perf_counter() - item_start) * 1000)
             return BatchItem(filename=filename, verdict=verdict)
 

@@ -118,6 +118,13 @@ dzBatch.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === 
 fileBatch.addEventListener("change", () => setBatchFiles(fileBatch.files));
 wireDrop(dzBatch, setBatchFiles);
 
+// optional application manifest
+const fileManifest = $("file-manifest");
+fileManifest.addEventListener("change", () => {
+  const f = fileManifest.files[0];
+  $("manifest-name").textContent = f ? f.name : "No CSV chosen";
+});
+
 $("verify-batch-btn").addEventListener("click", runBatch);
 
 async function runBatch() {
@@ -132,6 +139,7 @@ async function runBatch() {
   const form = new FormData();
   batchFiles.forEach((f) => form.append("images", f));
   form.append("mode", "rules");
+  if (fileManifest.files[0]) form.append("manifest", fileManifest.files[0]);
 
   try {
     const res = await fetch("/api/verify-batch", { method: "POST", body: form });
@@ -167,6 +175,10 @@ function renderVerdict(container, v) {
     return;
   }
 
+  if (v.quality_note) {
+    html += `<div class="quality-note">📷 ${esc(v.quality_note)}</div>`;
+  }
+
   for (const c of v.checks) {
     html += `<div class="check ${c.status}"><span class="icon">${ICON[c.status]}</span><div>` +
       `<div class="field-name">${esc(c.label)}</div>` +
@@ -183,6 +195,9 @@ function renderVerdict(container, v) {
 }
 
 let batchRows = [];
+const RESULT_LABEL = { pass: "Pass", fail: "Review", unreadable: "Unreadable" };
+const modeLabel = (m) => (m === "compare" ? "vs application" : "completeness");
+
 function renderBatch(data) {
   $("batch-summary").innerHTML =
     pill("pass", "Passed", data.passed) +
@@ -193,9 +208,14 @@ function renderBatch(data) {
   batchRows = data.results.map((r) => ({
     filename: r.filename,
     overall: r.verdict.overall,
-    issues: (r.verdict.checks || []).filter((c) => c.status === "fail").map((c) => c.label),
+    mode: r.verdict.mode,
+    // Actionable items: failures plus prominence/quality warnings.
+    issues: (r.verdict.checks || [])
+      .filter((c) => c.status === "fail" || c.status === "warn")
+      .map((c) => `${c.label}${c.status === "warn" ? " (check)" : ""}`),
   }));
   renderBatchTable("overall");
+  show($("batch-toolbar"), true);
   show($("batch-result"), true);
 }
 
@@ -206,12 +226,13 @@ function renderBatchTable(sortKey) {
     return rank[a.overall] - rank[b.overall];
   });
   let html = `<table class="batch-table"><thead><tr>` +
-    `<th data-sort="filename">File</th><th data-sort="overall">Result</th><th>Issues</th>` +
+    `<th data-sort="filename">File</th><th data-sort="overall">Result</th>` +
+    `<th>Checked as</th><th>Issues</th>` +
     `</tr></thead><tbody>`;
   for (const r of rows) {
-    const label = { pass: "Pass", fail: "Review", unreadable: "Unreadable" }[r.overall];
     html += `<tr><td>${esc(r.filename)}</td>` +
-      `<td><span class="pill ${r.overall}">${label}</span></td>` +
+      `<td><span class="pill ${r.overall}">${RESULT_LABEL[r.overall]}</span></td>` +
+      `<td>${modeLabel(r.mode)}</td>` +
       `<td>${r.issues.length ? esc(r.issues.join(", ")) : "—"}</td></tr>`;
   }
   html += `</tbody></table>`;
@@ -223,6 +244,31 @@ function renderBatchTable(sortKey) {
 function pill(cls, label, n) {
   return `<div class="summary-pill ${cls}"><span class="big">${n}</span>${label}</div>`;
 }
+
+// ---------- export ----------
+function csvCell(v) {
+  const s = String(v == null ? "" : v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+$("download-csv").addEventListener("click", () => {
+  const lines = [["filename", "result", "checked_as", "issues"].join(",")];
+  for (const r of batchRows) {
+    lines.push([r.filename, RESULT_LABEL[r.overall], modeLabel(r.mode), r.issues.join("; ")]
+      .map(csvCell).join(","));
+  }
+  const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "label-check-results.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+$("print-results").addEventListener("click", () => window.print());
 
 // ---------- drag & drop ----------
 function wireDrop(zone, onFiles) {

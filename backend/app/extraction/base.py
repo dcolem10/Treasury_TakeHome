@@ -13,12 +13,21 @@ from typing import Optional
 
 @dataclass
 class LabelExtraction:
-    """Raw text/fields read off a label image. No compliance judgment here."""
+    """Raw text/fields read off a label image. No compliance judgment here.
+
+    Beyond the text fields, the backend may report visual signals it observed:
+    whether the warning appears bold, how prominent the warning looks, and an
+    overall image-quality read. These feed prominence and messy-photo handling.
+    """
 
     readable: bool
     fields: dict[str, Optional[str]] = field(default_factory=dict)
     raw_text: str = ""
     error: Optional[str] = None
+    # Visual signals (None when the backend can't judge them, e.g. local OCR).
+    warning_is_bold: Optional[bool] = None
+    warning_prominence: Optional[str] = None  # "prominent" | "small" | "buried"
+    image_quality: Optional[str] = None  # "clear" | "marginal" | "unreadable"
 
     def get(self, key: str) -> Optional[str]:
         value = self.fields.get(key)

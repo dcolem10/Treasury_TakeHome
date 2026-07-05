@@ -33,9 +33,13 @@ All endpoints return JSON. Images are sent as multipart form-data. No auth on th
     "government_warning": "…"
   },
   "elapsed_ms": 1234,
-  "error": null            // populated when overall = "unreadable"
+  "error": null,           // populated when overall = "unreadable"
+  "quality_note": null     // set when the image was readable but marginal (angle/glare/dim)
 }
 ```
+
+The Government Warning check may be `warn` (not just pass/fail) when the text is exact but
+the warning looks non-bold, unusually small, or buried — a prominence flag for the agent.
 
 ## `POST /api/verify`
 Multipart fields:
@@ -51,7 +55,13 @@ Returns: `Verdict`.
 Multipart fields:
 - `images` (multiple files, required)
 - `mode` ("compare" | "rules", default "rules")
-- (compare-mode expected values are out of scope for batch v1 — batch runs rule-check)
+- `manifest` (optional CSV file) — an application list. Each image whose filename matches a
+  row is verified in **compare** mode against that row's expected values; unmatched images
+  fall back to **rule-check**. Columns (header row, case-insensitive; only `filename`
+  required): `filename, brand_name, class_type, alcohol_content, net_contents, producer,
+  country_of_origin`. A CSV with no `filename` column returns 400.
+
+Each result's `verdict.mode` reports how that file was checked (`compare` vs `rules`).
 
 Returns:
 ```json
