@@ -212,7 +212,8 @@ a { color: var(--primary); }
 .dropzone:hover { border-color: var(--primary); }
 .dropzone.dragover { border-color: var(--primary); background: var(--primary-tint); }
 .dropzone-empty { display: grid; gap: 10px; justify-items: center; color: var(--muted); }
-.dz-icon { font-size: 38px; }
+.dz-icon { line-height: 0; color: var(--line-strong); }
+.dropzone:hover .dz-icon, .dropzone.dragover .dz-icon { color: var(--primary); }
 .dz-text { font-size: 16px; }
 .preview { max-height: 280px; max-width: 100%; border-radius: 0; border: 1px solid var(--line); }
 
@@ -267,7 +268,13 @@ a { color: var(--primary); }
 .check.pass { border-left-color: var(--pass-edge); }
 .check.fail { border-left-color: var(--fail-edge); }
 .check.warn { border-left-color: var(--warn-edge); }
-.check .icon { font-size: 20px; line-height: 1.3; }
+.check .icon {
+  font-size: 18px; line-height: 1.4; font-weight: 800; text-align: center;
+  font-family: var(--font);
+}
+.check.pass .icon { color: var(--pass); }
+.check.fail .icon { color: var(--fail); }
+.check.warn .icon { color: var(--warn); }
 .check .field-name { font-weight: 700; }
 .check .reason { color: var(--muted); font-size: 15.5px; }
 .check .detail { font-size: 14.5px; color: var(--muted); margin-top: 5px; }

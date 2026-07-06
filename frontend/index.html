@@ -108,7 +108,12 @@
           <input type="file" id="file-single" accept="image/*" hidden />
           <img id="preview" class="preview" alt="Selected label" hidden />
           <div id="dropzone-empty" class="dropzone-empty">
-            <span class="dz-icon" aria-hidden="true">&#128247;</span>
+            <span class="dz-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15.5V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/>
+                <path d="M4 15.5v3a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-3"/>
+              </svg>
+            </span>
             <span class="dz-text">Click to choose a photo, or drag one here</span>
           </div>
         </div>
@@ -128,7 +133,13 @@
         <div class="dropzone" id="dropzone-batch" tabindex="0" role="button" aria-label="Add label images">
           <input type="file" id="file-batch" accept="image/*" multiple hidden />
           <div class="dropzone-empty">
-            <span class="dz-icon" aria-hidden="true">&#128193;</span>
+            <span class="dz-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15.5V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/>
+                <path d="M4 15.5v3a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-3"/>
+                <path d="M8 2.5h8" opacity=".55"/>
+              </svg>
+            </span>
             <span class="dz-text" id="batch-count-text">Click to choose photos, or drag them here</span>
           </div>
         </div>

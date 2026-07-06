@@ -2,7 +2,8 @@
 
 // ---------- helpers ----------
 const $ = (id) => document.getElementById(id);
-const ICON = { pass: "✅", fail: "❌", warn: "⚠️", unreadable: "⚠️" };
+// Typographic status marks (colored by state in CSS) — deliberately not emoji.
+const ICON = { pass: "✓", fail: "✕", warn: "!", unreadable: "!" };
 const EXPECTED_FIELDS = [
   "brand_name", "class_type", "alcohol_content",
   "net_contents", "producer", "country_of_origin",
@@ -168,7 +169,7 @@ function renderVerdict(container, v) {
     `</div>`;
 
   if (v.overall === "unreadable") {
-    html += `<div class="check warn"><span class="icon">⚠️</span><div>` +
+    html += `<div class="check warn"><span class="icon">!</span><div>` +
       `<div class="field-name">Please resubmit a clearer photo</div>` +
       `<div class="reason">${esc(v.error || "The label text could not be read.")}</div></div></div>`;
     container.innerHTML = html;
@@ -176,10 +177,10 @@ function renderVerdict(container, v) {
   }
 
   if (v.quality_note) {
-    html += `<div class="quality-note">📷 ${esc(v.quality_note)}</div>`;
+    html += `<div class="quality-note"><b>Image quality:</b> ${esc(v.quality_note)}</div>`;
   }
   if (v.crosscheck_note) {
-    html += `<div class="crosscheck-note">🔎 ${esc(v.crosscheck_note)}</div>`;
+    html += `<div class="crosscheck-note"><b>Independent check:</b> ${esc(v.crosscheck_note)}</div>`;
   }
 
   for (const c of v.checks) {
