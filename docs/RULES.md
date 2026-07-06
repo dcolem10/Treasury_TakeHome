@@ -15,6 +15,12 @@ operate machinery, and may cause health problems.
 
 ### Warning validation logic (`comparison/warning.py`)
 Normalize whitespace (collapse runs, including newlines) before comparing, then check:
+0. **Heading-casing signals first** — the extractor reports `warning_heading_exact`
+   (character-for-character copy of the printed heading) and `warning_heading_all_caps`
+   (explicit boolean). Either reporting lowercase → **fail**, regardless of how the
+   transcription is cased. This defends against models that canonicalize the transcribed
+   warning toward the statutory ALL-CAPS form and would otherwise launder a title-case
+   heading past check 1 (live regression, 2026-07-06 — see DECISIONS D10).
 1. **Prefix caps** — the literal `GOVERNMENT WARNING:` substring is present in ALL CAPS.
    - Title-case `Government Warning:` → **fail** with reason "must be in all capital letters".
 2. **Exact body** — the full normalized text equals the canonical statement (case-sensitive

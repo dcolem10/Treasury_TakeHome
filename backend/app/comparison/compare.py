@@ -167,6 +167,10 @@ def _warning_check(extraction: LabelExtraction) -> CheckResult:
         found,
         is_bold=extraction.warning_is_bold,
         prominence=extraction.warning_prominence,
+        heading_exact=extraction.warning_heading_exact,
+        heading_all_caps=extraction.warning_heading_all_caps,
+        differs_from_standard=extraction.warning_differs_from_standard,
+        deviation_note=extraction.warning_deviation_note,
     )
     return _row("government_warning", result.status, result.reason, found=found)
 

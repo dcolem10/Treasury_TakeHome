@@ -28,6 +28,17 @@ class LabelExtraction:
     warning_is_bold: Optional[bool] = None
     warning_prominence: Optional[str] = None  # "prominent" | "small" | "buried"
     image_quality: Optional[str] = None  # "clear" | "marginal" | "unreadable"
+    # Capitalization-fidelity signals for the warning heading. Some models
+    # "helpfully" canonicalize the transcription toward the statutory ALL-CAPS
+    # form, which would launder a title-case heading past the strict caps check
+    # — so the heading's casing is also captured as targeted observations.
+    warning_heading_exact: Optional[str] = None
+    warning_heading_all_caps: Optional[bool] = None
+    # Body-fidelity signal: model's explicit report of whether the printed warning
+    # deviates from the statutory text (defends the exact-match the same way the
+    # heading signals defend the caps check).
+    warning_differs_from_standard: Optional[bool] = None
+    warning_deviation_note: Optional[str] = None
 
     def get(self, key: str) -> Optional[str]:
         value = self.fields.get(key)

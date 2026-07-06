@@ -27,6 +27,12 @@ Verify on the deployed URL with `scripts/smoke_live.sh <url>` and the plan in
 `samples/README.md` (samples 06/07 + `manifest_example.csv` cover U1/U2/U4).
 
 ## Log
+- **REGRESSION + FIX (2026-07-06):** model swap to sonnet-class caused sample 02
+  (title-case warning) to false-PASS live — the model canonicalized the transcription to
+  ALL CAPS, laundering the violation past the caps check. Fix: targeted
+  `warning_heading_exact` / `warning_heading_all_caps` signals checked before the
+  transcription (D10). 49 tests pass incl. live-regression simulation. Gate: redeploy →
+  smoke rerun must show 02 -> fail. Fallback if not: revert to claude-opus-4-8.
 - **Live smoke test (2026-07-05, Lightsail):** rule-check 01–05 all matched; 06 tiny-warning
   → pass + warning warn (U2 confirmed live); 07 low-quality → pass + quality note (U4
   confirmed live). Latencies 2.9–5.3s. **Found regression:** 01 failed batch-compare —
