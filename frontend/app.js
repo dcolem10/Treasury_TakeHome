@@ -178,6 +178,9 @@ function renderVerdict(container, v) {
   if (v.quality_note) {
     html += `<div class="quality-note">📷 ${esc(v.quality_note)}</div>`;
   }
+  if (v.crosscheck_note) {
+    html += `<div class="crosscheck-note">🔎 ${esc(v.crosscheck_note)}</div>`;
+  }
 
   for (const c of v.checks) {
     html += `<div class="check ${c.status}"><span class="icon">${ICON[c.status]}</span><div>` +
