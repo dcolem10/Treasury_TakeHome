@@ -32,7 +32,39 @@ def test_extract_abv_from_proof():
     assert fuzzy.extract_abv("90 Proof") == 45.0
 
 
+def test_producer_subset_forgives_bottler_boilerplate():
+    # Regression: live smoke test 2026-07-05 — manifest producer failed at 75
+    # against the label's "Distilled & Bottled by" phrasing.
+    assert fuzzy.similarity_subset(
+        "Old Tom Distillery, Bardstown, KY",
+        "Distilled & Bottled by Old Tom Distillery, Bardstown, KY",
+    ) >= 88
+
+
+def test_producer_subset_still_fails_wrong_producer():
+    assert fuzzy.similarity_subset(
+        "Old Tom Distillery, Bardstown, KY",
+        "Bottled by Pirate Cove Rum Co, Miami, FL",
+    ) < 80
+
+
 # ---- compare mode ----
+def test_compare_manifest_row_for_sample_01_passes():
+    """End-to-end regression for the live batch+manifest failure on 01_compliant.png."""
+    v = build_verdict(
+        make_extraction(producer="Distilled & Bottled by Old Tom Distillery, Bardstown, KY"),
+        "compare",
+        {
+            "brand_name": "Old Tom Distillery",
+            "class_type": "Kentucky Straight Bourbon Whiskey",
+            "alcohol_content": "45% Alc./Vol.",
+            "net_contents": "750 mL",
+            "producer": "Old Tom Distillery, Bardstown, KY",
+        },
+    )
+    assert v.overall == "pass", [c for c in v.checks if c.status != "pass"]
+
+
 def test_compare_brand_case_mismatch_passes():
     v = build_verdict(make_extraction(brand_name="STONE'S THROW"), "compare",
                       {"brand_name": "Stone's Throw"})

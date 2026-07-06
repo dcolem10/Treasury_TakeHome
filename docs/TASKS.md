@@ -27,6 +27,13 @@ Verify on the deployed URL with `scripts/smoke_live.sh <url>` and the plan in
 `samples/README.md` (samples 06/07 + `manifest_example.csv` cover U1/U2/U4).
 
 ## Log
+- **Live smoke test (2026-07-05, Lightsail):** rule-check 01–05 all matched; 06 tiny-warning
+  → pass + warning warn (U2 confirmed live); 07 low-quality → pass + quality note (U4
+  confirmed live). Latencies 2.9–5.3s. **Found regression:** 01 failed batch-compare —
+  producer "Distilled & Bottled by ..." scored 75 vs the manifest's bare name/address.
+- **Fix:** producer now scored with subset-tolerant token_set_ratio (100 for bottler
+  boilerplate, 38 for a genuinely wrong producer); brand/class stay on token_sort_ratio.
+  37 tests pass incl. end-to-end regression. Redeploy + re-run smoke to confirm live.
 - U1–U4 built: manifest batch-compare, warning prominence, CSV/print export, messy-photo
   handling. 34 backend tests pass; manifest routing confirmed over real HTTP. Vision-dependent
   behavior (U2/U4) to be confirmed on the live deployment.
