@@ -24,5 +24,10 @@ class Settings:
     FUZZY_PASS: int = int(os.getenv("FUZZY_PASS", "88"))
     FUZZY_WARN: int = int(os.getenv("FUZZY_WARN", "80"))
 
+    # Abuse protection: images (= paid vision calls) allowed per client per window.
+    # 0 disables. Default fits one full 300-label batch + singles per 10 minutes.
+    RATE_LIMIT_IMAGES: int = int(os.getenv("RATE_LIMIT_IMAGES", "400"))
+    RATE_LIMIT_WINDOW_S: float = float(os.getenv("RATE_LIMIT_WINDOW_S", "600"))
+
 
 settings = Settings()
