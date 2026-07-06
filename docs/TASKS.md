@@ -12,21 +12,27 @@ Status: ☐ todo · ◐ in progress · ☑ done
 | T6 | Single-label UI | ☑ | T2, T5 | upload, mode toggle, checklist |
 | T7 | Batch upload UI | ☑ | T2, T5 | results table |
 | T8 | Test labels + automated tests + latency check | ☑ | T4, T5 | 18 pytest cases green |
-| T9 | Deploy + top-level README | ◐ | T5–T8 | Dockerfile + README done; live URL pending user |
+| T9 | Deploy + top-level README | ☑ | T5–T8 | live on Lightsail: label-check.75wkqc7jjpt0r.us-east-1.cs.amazonlightsail.com |
 
 ## Upgrades (post-deploy, round 2)
 
 | # | Upgrade | Status | Verified |
 |---|---------|--------|----------|
 | U1 | Batch compare-to-manifest (CSV) | ☑ | unit + real-HTTP (mode routing, 400 on bad CSV) |
-| U2 | Warning prominence (bold/size/buried → warn) | ☑ logic | unit tests; **live model behavior: confirm on deploy** |
+| U2 | Warning prominence (bold/size/buried → warn) | ☑ | live 2026-07-06: 06 → pass + warning warn |
 | U3 | Export results (CSV + print) | ☑ | client-side; confirm download/print in browser |
-| U4 | Messy-photo handling (marginal read + note) | ☑ logic | unit tests; **live model behavior: confirm on deploy** |
+| U4 | Messy-photo handling (marginal read + note) | ☑ | live 2026-07-06: 07 → pass + quality note |
 
 Verify on the deployed URL with `scripts/smoke_live.sh <url>` and the plan in
 `samples/README.md` (samples 06/07 + `manifest_example.csv` cover U1/U2/U4).
 
 ## Log
+- **LIVE DEPLOY + SMOKE (2026-07-06, Lightsail):** amd64 rebuild pushed and deployed
+  (`ANTHROPIC_MODEL=claude-sonnet-5` kept). Smoke: 5/5 rule-check samples matched —
+  **02 → fail confirms the D10 heading-signal fix holds live on sonnet-5** (no model
+  fallback needed). 06 → pass + warning warn (U2), 07 → pass + quality note (U4),
+  batch+manifest compare routing correct (U1). Latencies 3.1–5.2s round-trip. U5
+  cross-check remains off (`warning_crosscheck: false`). T9 closed with the live URL.
 - **UI FIX (2026-07-06):** the USWDS redesign's `.panel { display: grid }` overrode the
   browser's default `[hidden] { display: none }`, so both tab panels (and other
   hidden-attribute elements styled with display classes) rendered at once. Fixed with an
