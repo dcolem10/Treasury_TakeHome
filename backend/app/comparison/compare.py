@@ -12,8 +12,14 @@ from ..schemas import CheckResult, ExtractedFields, Verdict
 from . import fuzzy
 from .warning import validate_warning
 
-# Free-text fields compared by fuzzy similarity in compare mode.
-_FUZZY_FIELDS = ["brand_name", "class_type", "producer"]
+# Free-text fields compared by fuzzy similarity in compare mode, with their scorer.
+# producer is subset-tolerant: labels wrap the name in "Distilled & Bottled by ..."
+# boilerplate that applications omit (see docs/RULES.md).
+_FUZZY_FIELDS = {
+    "brand_name": fuzzy.similarity,
+    "class_type": fuzzy.similarity,
+    "producer": fuzzy.similarity_subset,
+}
 # Fields compared by normalized exact match.
 _EXACT_FIELDS = ["net_contents", "country_of_origin"]
 
@@ -32,12 +38,12 @@ def compare_to_fields(
     """Compare the label against agent-supplied expected values."""
     checks: list[CheckResult] = []
 
-    for field in _FUZZY_FIELDS:
+    for field, scorer in _FUZZY_FIELDS.items():
         exp = (expected.get(field) or "").strip()
         if not exp:
             continue  # agent left it blank -> not checked
         found = extraction.get(field)
-        score = fuzzy.similarity(exp, found)
+        score = scorer(exp, found)
         if score >= settings.FUZZY_PASS:
             status, reason = "pass", f"Matches (similarity {score})."
         elif score >= settings.FUZZY_WARN:

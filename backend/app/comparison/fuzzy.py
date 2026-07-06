@@ -33,6 +33,25 @@ def similarity(a: str | None, b: str | None) -> int:
     return int(round(fuzz.token_sort_ratio(na, nb)))
 
 
+def similarity_subset(a: str | None, b: str | None) -> int:
+    """0–100 subset-tolerant similarity (token_set_ratio).
+
+    Used for the producer field, where the label legally wraps the name in
+    boilerplate ("Distilled & Bottled by <name>") that the application omits.
+    token_set_ratio ignores tokens unique to one side when the shared core
+    matches, so the bottler prefix doesn't sink an obvious match — while a
+    genuinely different producer still scores far below the fail threshold.
+    Too lenient for brand/class (a subset brand is a real mismatch), so those
+    stay on token_sort_ratio.
+    """
+    na, nb = normalize(a), normalize(b)
+    if not na and not nb:
+        return 100
+    if not na or not nb:
+        return 0
+    return int(round(fuzz.token_set_ratio(na, nb)))
+
+
 def normalized_equal(a: str | None, b: str | None) -> bool:
     """Exact match after normalization (units/case/spacing-insensitive)."""
     return normalize(a) == normalize(b) and normalize(a) != ""

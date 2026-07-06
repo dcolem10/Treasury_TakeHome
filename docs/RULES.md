@@ -62,8 +62,8 @@ Applies to free-text fields where human judgment forgives trivial differences
 | Field | Strategy |
 |-------|----------|
 | brand_name | fuzzy (token_sort_ratio) |
-| class_type | fuzzy |
-| producer | fuzzy |
+| class_type | fuzzy (token_sort_ratio) |
+| producer | fuzzy **subset-tolerant** (token_set_ratio) — labels wrap the name in "Distilled & Bottled by ..." boilerplate the application omits; sort-ratio scored a true match at 75 (live regression, 2026-07-05). Subset scoring is safe here but too lenient for brand/class. |
 | net_contents | normalized exact (units-aware: `750 mL` == `750ml`) |
 | alcohol_content | numeric ABV extracted and compared with ±0.0 tolerance (configurable) |
 | country_of_origin | normalized exact |
