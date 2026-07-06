@@ -27,6 +27,11 @@ Verify on the deployed URL with `scripts/smoke_live.sh <url>` and the plan in
 `samples/README.md` (samples 06/07 + `manifest_example.csv` cover U1/U2/U4).
 
 ## Log
+- **UI FIX (2026-07-06):** the USWDS redesign's `.panel { display: grid }` overrode the
+  browser's default `[hidden] { display: none }`, so both tab panels (and other
+  hidden-attribute elements styled with display classes) rendered at once. Fixed with an
+  explicit `[hidden] { display: none !important; }` reset; verified in Chromium — tab
+  switching, compare-mode reveal, and both panels render correctly.
 - **U5 — Textract warning cross-check (2026-07-06):** optional second, non-LLM witness for
   the Government Warning (`WARNING_CROSSCHECK=on` + AWS creds). Reads the warning verbatim,
   measures prominence from word geometry, merges fail-closed with the LLM signals, runs

@@ -83,6 +83,8 @@
 }
 
 * { box-sizing: border-box; }
+/* the hidden attribute must beat class display rules (.panel, .result, …) */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
