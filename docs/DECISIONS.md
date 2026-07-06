@@ -30,6 +30,39 @@ Append new decisions at the top. Each entry: context → decision → consequenc
   not reliably recoverable from OCR text, so the prototype enforces ALL-CAPS prefix + exact
   wording and notes bold as a known limitation.
 
+## D10 — Warning caps check must not trust transcription casing (model-swap regression)
+- **Context:** Live smoke test 2026-07-06: after switching `ANTHROPIC_MODEL` from
+  claude-opus-4-8 to claude-sonnet-5, sample 02 (title-case `Government Warning:`) began
+  **false-PASSING**. Root cause: the caps check ran only on the transcribed warning text,
+  and the new model canonicalized the transcription toward the statutory ALL-CAPS form —
+  the transcription itself laundered the violation. No code had changed between runs.
+- **Decision:** Capitalization is now captured as **targeted observations**, not a
+  transcription side effect: the extractor must report `warning_heading_exact`
+  (character-for-character copy of the printed heading) and `warning_heading_all_caps`
+  (explicit true/false). The validator checks these BEFORE the transcription; a lowercase
+  report from either is a hard fail regardless of transcript casing. Prompt also now
+  forbids normalizing the warning ("never 'correct' it to the standard format").
+- **Consequence:** The strict check is robust to canonicalizing models. General lesson
+  recorded: any compliance-critical property must be asked for as a first-class question,
+  not inferred from incidental fidelity. Acceptance gate: redeploy + live smoke rerun
+  (sample 02 must fail again). If the swapped model still launders casing, revert to
+  claude-opus-4-8 — correctness outranks latency, per the brief's zero-leeway warning rule.
+- **Follow-up (same incident, full audit):** an agent audit enumerated every point where the
+  verdict trusts model output. Fixed in the same change: the warning **body** had the same
+  weakness (a model could silently "correct" a misspelled printed warning into perfect
+  statutory text) — now defended by an explicit `warning_differs_from_standard` /
+  `warning_deviation_note` signal that fails the check even when the transcript reads
+  canonical. Prompt now carries explicit fidelity rules: no typo correction, no unit
+  conversion, no abbreviation expansion, no filling fields from brand knowledge.
+- **Residual risks (documented, not fully solvable single-model):**
+  1. *Hallucinated presence* — a model could invent a missing required field, false-passing a
+     presence check. Mitigated by fidelity rule 1; a real fix is a second verification pass
+     or human spot-check queue (production recommendation).
+  2. *Warn suppression* — bold/prominence/quality signals can only add warns, never fails
+     (by design, D8); a model mis-reporting them suppresses the agent's nudge, not a verdict.
+  3. Note: the extraction model never sees application/manifest values, so it cannot converge
+     transcription toward *expected* values — only toward standard/statutory forms.
+
 ## D9 — Public-prototype abuse defenses: weighted rate limiting + injection hardening
 - **Context:** The deployed URL is unauthenticated and every image triggers a paid vision
   call; a single batch request can spend 300 calls. Label images are untrusted input that

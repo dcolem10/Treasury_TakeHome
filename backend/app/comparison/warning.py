@@ -29,17 +29,50 @@ def validate_warning(
     found: str | None,
     is_bold: bool | None = None,
     prominence: str | None = None,
+    heading_exact: str | None = None,
+    heading_all_caps: bool | None = None,
+    differs_from_standard: bool | None = None,
+    deviation_note: str | None = None,
 ) -> WarningResult:
     """Judge a transcribed warning string against the statutory requirement.
 
-    `is_bold` / `prominence` are optional visual signals from the extraction backend.
-    Text/caps errors are hard fails. When the text is correct but the warning looks
-    non-bold, shrunk, or buried, we return a **warn** — TTB requires bold + a minimum
-    type size, but these visual reads are heuristic, so we flag for the agent's eye
-    rather than auto-rejecting. See docs/RULES.md.
+    `heading_exact` / `heading_all_caps` are targeted capitalization observations from
+    the extraction backend. They are checked BEFORE the transcription, because some
+    models canonicalize the transcribed warning toward the statutory ALL-CAPS form —
+    which would launder a title-case heading past a transcription-only check (live
+    regression, 2026-07-06). A lowercase report from either signal is a hard fail
+    regardless of how the transcription is cased.
+
+    `is_bold` / `prominence` are optional visual signals. Text/caps errors are hard
+    fails. When the text is correct but the warning looks non-bold, shrunk, or buried,
+    we return a **warn** — TTB requires bold + a minimum type size, but these visual
+    reads are heuristic, so we flag for the agent's eye rather than auto-rejecting.
+    See docs/RULES.md.
     """
     if not found or not found.strip():
         return WarningResult("fail", "Government Warning statement not found on the label.")
+
+    # 0) Targeted casing signals outrank the transcription (anti-canonicalization).
+    if heading_all_caps is False:
+        return WarningResult(
+            "fail",
+            "'GOVERNMENT WARNING:' must be in all capital letters "
+            "(the heading on the label is not fully capitalized).",
+        )
+    if heading_exact and any(c.islower() for c in heading_exact):
+        return WarningResult(
+            "fail",
+            "'GOVERNMENT WARNING:' must be in all capital letters "
+            f"(label prints the heading as {heading_exact.strip()!r}).",
+        )
+    # Body-fidelity signal: the model explicitly saw a deviation from the statutory
+    # wording — fail even if the transcription it returned reads canonical.
+    if differs_from_standard is True:
+        note = f" ({deviation_note})" if deviation_note else ""
+        return WarningResult(
+            "fail",
+            "Warning text does not match the required statement word-for-word" + note + ".",
+        )
 
     collapsed = _collapse(found)
 

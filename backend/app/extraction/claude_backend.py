@@ -32,8 +32,22 @@ _INSTRUCTION = (
     "- alcohol_content (exactly as printed, e.g. '45% Alc./Vol. (90 Proof)')\n"
     "- net_contents (e.g. '750 mL')\n- producer (name and address of bottler/producer)\n"
     "- country_of_origin (or null if not present)\n"
-    "- government_warning (transcribe the FULL warning statement EXACTLY as printed, preserving "
-    "capitalization and punctuation; null if absent)\n"
+    "- government_warning (transcribe the FULL warning statement EXACTLY as printed. PRESERVE "
+    "the printed capitalization even where it differs from the standard statutory format — if "
+    "the label prints 'Government Warning:' in title case, transcribe 'Government Warning:', "
+    "NEVER 'correct' it to 'GOVERNMENT WARNING:'. null if absent)\n"
+    "- warning_heading_exact (copy the first three words of the warning statement "
+    "CHARACTER-FOR-CHARACTER as printed, e.g. 'GOVERNMENT WARNING: (1)' or "
+    "'Government Warning: (1)'. This is a capitalization-fidelity check: reproduce the exact "
+    "letters you see, do not normalize. null if no warning)\n"
+    "- warning_heading_all_caps (true/false/null — looking at the printed label, is the "
+    "warning heading printed entirely in CAPITAL letters? Answer false if ANY letter of the "
+    "heading is lowercase, e.g. 'Government Warning:' -> false)\n"
+    "- warning_differs_from_standard (true/false/null — does the PRINTED warning text differ "
+    "in ANY way from the standard statutory statement: spelling, missing/extra/changed words, "
+    "different numbering or punctuation? true if there is any difference at all)\n"
+    "- warning_deviation_note (if warning_differs_from_standard is true, one short sentence "
+    "describing the difference exactly as printed; else null)\n"
     "- warning_is_bold (true/false/null — does the 'GOVERNMENT WARNING:' heading appear bold?)\n"
     "- warning_prominence ('prominent' | 'small' | 'buried' | null — is the warning a readable "
     "size and clearly separated, unusually small, or hidden/blended into other text?)\n"
@@ -41,6 +55,15 @@ _INSTRUCTION = (
     "but you can still read most text; 'unreadable' only if you truly cannot read the label)\n"
     "- readable (true if the label text is legible, false if the image is too blurry/dark/angled to read)\n\n"
     "Do your best to read labels shot at an angle, with glare, or in poor light before giving up. "
+    "\nTRANSCRIPTION FIDELITY RULES (these override your instinct to be helpful):\n"
+    "1. Report ONLY text you can literally see printed. Never fill in a field from brand "
+    "knowledge, context, or what labels usually say. Not visible -> null.\n"
+    "2. Never correct apparent typos or misspellings — transcribe the error.\n"
+    "3. Never convert units (if the label prints '75 cl', report '75 cl', not '750 mL').\n"
+    "4. Never expand abbreviations or complete partial designations.\n"
+    "5. Never normalize casing, punctuation, or wording toward standard/statutory forms.\n"
+    "A compliance decision depends on the difference between what is printed and what is "
+    "standard — if you normalize, you destroy the evidence.\n"
     "Return only the JSON object, no prose, no markdown fences."
 )
 
@@ -119,6 +142,14 @@ class ClaudeVisionBackend(ExtractionBackend):
             warning_is_bold=data.get("warning_is_bold") if isinstance(
                 data.get("warning_is_bold"), bool
             ) else None,
+            warning_heading_exact=_clean(data.get("warning_heading_exact")),
+            warning_heading_all_caps=data.get("warning_heading_all_caps") if isinstance(
+                data.get("warning_heading_all_caps"), bool
+            ) else None,
+            warning_differs_from_standard=data.get("warning_differs_from_standard")
+            if isinstance(data.get("warning_differs_from_standard"), bool)
+            else None,
+            warning_deviation_note=_clean(data.get("warning_deviation_note")),
             warning_prominence=quality_or_none(_clean(data.get("warning_prominence")),
                                                {"prominent", "small", "buried"}),
             image_quality=quality_or_none(quality, {"clear", "marginal", "unreadable"}),
