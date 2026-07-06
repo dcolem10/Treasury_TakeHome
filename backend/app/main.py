@@ -14,6 +14,7 @@ from .comparison.compare import build_verdict
 from .config import settings
 from .extraction import get_backend
 from .extraction.base import LabelExtraction
+from .extraction.textract_verify import crosscheck_warning, merge_witness
 from .manifest import match_expected, parse_manifest
 from .ratelimit import enforce_rate_limit
 from .rules import EXTRACTION_FIELDS
@@ -40,13 +41,36 @@ MAX_BATCH_FILES = 300
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "extraction_backend": settings.EXTRACTION_BACKEND}
+    return {
+        "status": "ok",
+        "extraction_backend": settings.EXTRACTION_BACKEND,
+        "warning_crosscheck": settings.WARNING_CROSSCHECK,
+    }
 
 
-async def _extract(image_bytes: bytes, content_type: str) -> LabelExtraction:
-    """Run the (sync) extraction backend off the event loop."""
+async def _extract(image_bytes: bytes, content_type: str) -> tuple[LabelExtraction, Optional[str]]:
+    """Extract label fields, optionally cross-checked by Textract.
+
+    The extraction backend and the (optional) Textract warning cross-check run
+    concurrently off the event loop so the cross-check doesn't add to wall time.
+    Returns the (possibly signal-merged) extraction and a cross-check note.
+    """
     backend = get_backend()
-    return await asyncio.to_thread(backend.extract, image_bytes, content_type or "image/jpeg")
+    ctype = content_type or "image/jpeg"
+    tasks = [asyncio.to_thread(backend.extract, image_bytes, ctype)]
+    if settings.WARNING_CROSSCHECK:
+        tasks.append(asyncio.to_thread(crosscheck_warning, image_bytes))
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    extraction = results[0]
+    if isinstance(extraction, BaseException):
+        raise extraction
+
+    note = None
+    if len(results) > 1 and not isinstance(results[1], BaseException):
+        extraction, note = merge_witness(extraction, results[1])
+    return extraction, note
 
 
 def _validate_image(data: bytes, content_type: Optional[str]) -> None:
@@ -78,7 +102,7 @@ async def verify(
     _validate_image(data, image.content_type)
 
     started = time.perf_counter()
-    extraction = await _extract(data, image.content_type or "image/jpeg")
+    extraction, crosscheck_note = await _extract(data, image.content_type or "image/jpeg")
     expected = {
         "brand_name": brand_name,
         "class_type": class_type,
@@ -87,7 +111,9 @@ async def verify(
         "producer": producer,
         "country_of_origin": country_of_origin,
     }
-    verdict = build_verdict(extraction, mode, expected if mode == "compare" else None)
+    verdict = build_verdict(
+        extraction, mode, expected if mode == "compare" else None, crosscheck_note=crosscheck_note
+    )
     verdict.elapsed_ms = int((time.perf_counter() - started) * 1000)
     return verdict
 
@@ -133,8 +159,10 @@ async def verify_batch(
                 )
             else:
                 item_start = time.perf_counter()
-                extraction = await _extract(data, content_type or "image/jpeg")
-                verdict = build_verdict(extraction, item_mode, expected)
+                extraction, crosscheck_note = await _extract(data, content_type or "image/jpeg")
+                verdict = build_verdict(
+                    extraction, item_mode, expected, crosscheck_note=crosscheck_note
+                )
                 verdict.elapsed_ms = int((time.perf_counter() - item_start) * 1000)
             return BatchItem(filename=filename, verdict=verdict)
 

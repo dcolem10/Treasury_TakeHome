@@ -29,5 +29,16 @@ class Settings:
     RATE_LIMIT_IMAGES: int = int(os.getenv("RATE_LIMIT_IMAGES", "400"))
     RATE_LIMIT_WINDOW_S: float = float(os.getenv("RATE_LIMIT_WINDOW_S", "600"))
 
+    # Optional Amazon Textract cross-check of the Government Warning (a second,
+    # non-LLM witness for the zero-leeway field). Off by default; needs AWS creds
+    # (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY) with textract:DetectDocumentText.
+    WARNING_CROSSCHECK: bool = os.getenv("WARNING_CROSSCHECK", "off").lower() in (
+        "1", "true", "on", "yes"
+    )
+    AWS_REGION: str = os.getenv("AWS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+    # Warning is "small" when its median word height falls below this fraction of
+    # the label's median word height (deterministic prominence from Textract geometry).
+    CROSSCHECK_MIN_HEIGHT_RATIO: float = float(os.getenv("CROSSCHECK_MIN_HEIGHT_RATIO", "0.6"))
+
 
 settings = Settings()

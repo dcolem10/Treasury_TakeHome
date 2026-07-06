@@ -127,7 +127,10 @@ def rule_check(extraction: LabelExtraction) -> list[CheckResult]:
 
 
 def build_verdict(
-    extraction: LabelExtraction, mode: str, expected: dict[str, str | None] | None = None
+    extraction: LabelExtraction,
+    mode: str,
+    expected: dict[str, str | None] | None = None,
+    crosscheck_note: str | None = None,
 ) -> Verdict:
     """Top-level entry: produce a full Verdict, handling unreadable images."""
     if not extraction.readable:
@@ -137,6 +140,7 @@ def build_verdict(
             mode=mode,  # type: ignore[arg-type]
             extracted=_extracted_model(extraction),
             error=extraction.error or "The label image could not be read. Please resubmit a clearer photo.",
+            crosscheck_note=crosscheck_note,
         )
 
     if mode == "compare":
@@ -158,6 +162,7 @@ def build_verdict(
         checks=checks,
         extracted=_extracted_model(extraction),
         quality_note=quality_note,
+        crosscheck_note=crosscheck_note,
     )
 
 

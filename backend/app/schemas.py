@@ -39,6 +39,8 @@ class Verdict(BaseModel):
     error: Optional[str] = None
     # Non-blocking note when the image was readable but marginal quality.
     quality_note: Optional[str] = None
+    # What the Textract cross-check observed about the warning (when enabled).
+    crosscheck_note: Optional[str] = None
 
 
 class BatchItem(BaseModel):

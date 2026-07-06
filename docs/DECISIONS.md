@@ -30,6 +30,24 @@ Append new decisions at the top. Each entry: context → decision → consequenc
   not reliably recoverable from OCR text, so the prototype enforces ALL-CAPS prefix + exact
   wording and notes bold as a known limitation.
 
+## D11 — Optional Textract cross-check: a second, non-LLM witness for the warning
+- **Context:** After D10, the warning check still had a single source of truth (the vision
+  LLM). For the one field with zero leeway, a second independent witness adds real defense —
+  and Textract, being literal OCR, does not canonicalize casing/wording the way an LLM can.
+- **Decision:** Optional Amazon Textract cross-check (`WARNING_CROSSCHECK=on` + AWS creds).
+  It reads the warning verbatim and, via word-box geometry, measures prominence
+  deterministically (warning height vs the *non-warning* text height). Signals are merged
+  **fail-closed**: a casing/wording problem seen by *either* the LLM or Textract fails the
+  check; the two never need to agree to reject. Runs concurrently with the LLM call so it
+  doesn't add wall-clock. A `crosscheck_note` records what Textract saw.
+- **Why Textract only, not Rekognition:** Rekognition DetectText is tuned for short scene
+  text and adds nothing for a warning paragraph; Textract's document OCR + geometry is the
+  right fit. Rekognition would be cost/dependency with no marginal benefit here.
+- **Consequence:** Off by default; degrades to a no-op (returns None) if boto3/creds/service
+  are absent, so the primary flow is never at risk. Production caveat unchanged: Textract is
+  a cloud-ML endpoint TTB's firewall would block — the on-prem path stays the Tesseract
+  backend. Geometry prominence is a heuristic (only ever raises a `warn`), not a hard fail.
+
 ## D10 — Warning caps check must not trust transcription casing (model-swap regression)
 - **Context:** Live smoke test 2026-07-06: after switching `ANTHROPIC_MODEL` from
   claude-opus-4-8 to claude-sonnet-5, sample 02 (title-case `Government Warning:`) began
