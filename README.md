@@ -92,6 +92,12 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/RULES.md`](docs/RULES
   pass/fail is computed **deterministically in Python** — a hostile label can misdescribe
   itself, but it cannot alter the rules, and the warning check always compares against the
   statutory text server-side.
+- **Warning cross-check (optional)** — set `WARNING_CROSSCHECK=on` with AWS credentials to add
+  an Amazon Textract second witness for the Government Warning. Textract reads the warning
+  verbatim (it can't canonicalize casing/wording like an LLM) and measures prominence from
+  word geometry; signals merge **fail-closed** with the model's. Runs concurrently, off by
+  default, and degrades to a no-op if unavailable. See `docs/DECISIONS.md` D10–D11 for the
+  model-canonicalization incident that motivated it.
 - **Headers & caching** — `nosniff`, frame-deny, and `no-cache` on frontend assets (fresh UI
   after every deploy).
 - **No persistence / no auth** — nothing is stored; a real deployment would add agency SSO,

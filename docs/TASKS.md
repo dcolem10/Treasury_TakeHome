@@ -27,6 +27,13 @@ Verify on the deployed URL with `scripts/smoke_live.sh <url>` and the plan in
 `samples/README.md` (samples 06/07 + `manifest_example.csv` cover U1/U2/U4).
 
 ## Log
+- **U5 — Textract warning cross-check (2026-07-06):** optional second, non-LLM witness for
+  the Government Warning (`WARNING_CROSSCHECK=on` + AWS creds). Reads the warning verbatim,
+  measures prominence from word geometry, merges fail-closed with the LLM signals, runs
+  concurrently. Off by default; graceful no-op without boto3/creds. 62 tests pass incl. an
+  end-to-end sim of Textract catching laundered casing the LLM passed. **Verify live:** set
+  the env + AWS creds, redeploy, confirm `/api/health` shows `warning_crosscheck: true` and
+  that 02 still fails with a `crosscheck_note`.
 - **REGRESSION + FIX (2026-07-06):** model swap to sonnet-class caused sample 02
   (title-case warning) to false-PASS live — the model canonicalized the transcription to
   ALL CAPS, laundering the violation past the caps check. Fix: targeted

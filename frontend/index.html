@@ -3,41 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TTB Label Check</title>
+  <title>TTB Label Verification</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <h1>Label Check</h1>
-    <p class="subtitle">Verify an alcohol label against TTB requirements</p>
+  <!-- Official government banner (U.S. Web Design System pattern) -->
+  <div class="gov-banner">
+    <div class="container gov-banner__inner">
+      <span class="gov-banner__flag" aria-hidden="true">
+        <svg viewBox="0 0 20 14" width="20" height="14" role="img" aria-label="U.S. flag">
+          <rect width="20" height="14" fill="#b31942"/>
+          <rect y="1.08" width="20" height="1.08" fill="#fff"/>
+          <rect y="3.23" width="20" height="1.08" fill="#fff"/>
+          <rect y="5.38" width="20" height="1.08" fill="#fff"/>
+          <rect y="7.54" width="20" height="1.08" fill="#fff"/>
+          <rect y="9.69" width="20" height="1.08" fill="#fff"/>
+          <rect y="11.85" width="20" height="1.08" fill="#fff"/>
+          <rect width="8.5" height="7.54" fill="#0a3161"/>
+        </svg>
+      </span>
+      <span class="gov-banner__text">An official-style demonstration for U.S. Government label review</span>
+      <details class="gov-banner__how">
+        <summary>Here&rsquo;s how you know</summary>
+        <div class="gov-banner__how-body">
+          This is a <strong>prototype</strong> built for a take-home exercise &mdash; not a live
+          federal system. It stores nothing and connects to no official TTB or Treasury network.
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Agency masthead -->
+  <header class="masthead">
+    <div class="container masthead__inner">
+      <span class="seal" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="46" height="46" role="img" aria-label="Bureau seal">
+          <circle cx="24" cy="24" r="23" fill="#162e51" stroke="#a5b8d0" stroke-width="1.5"/>
+          <circle cx="24" cy="24" r="17" fill="none" stroke="#7a95bd" stroke-width="1"/>
+          <rect x="14" y="20" width="20" height="13" fill="none" stroke="#d6e0ef" stroke-width="1.4"/>
+          <path d="M12 20 L24 12 L36 20 Z" fill="none" stroke="#d6e0ef" stroke-width="1.4" stroke-linejoin="round"/>
+          <line x1="17" y1="20" x2="17" y2="33" stroke="#d6e0ef" stroke-width="1.2"/>
+          <line x1="21" y1="20" x2="21" y2="33" stroke="#d6e0ef" stroke-width="1.2"/>
+          <line x1="27" y1="20" x2="27" y2="33" stroke="#d6e0ef" stroke-width="1.2"/>
+          <line x1="31" y1="20" x2="31" y2="33" stroke="#d6e0ef" stroke-width="1.2"/>
+        </svg>
+      </span>
+      <div class="masthead__id">
+        <span class="masthead__agency">Alcohol and Tobacco Tax and Trade Bureau</span>
+        <span class="masthead__dept">U.S. Department of the Treasury</span>
+      </div>
+    </div>
   </header>
+  <div class="flag-rule" aria-hidden="true"></div>
 
-  <nav class="tabs" role="tablist">
-    <button class="tab is-active" id="tab-single" role="tab" aria-selected="true">Check one label</button>
-    <button class="tab" id="tab-batch" role="tab" aria-selected="false">Check many labels</button>
-  </nav>
+  <main class="container">
+    <div class="page-head">
+      <p class="eyebrow">COLA Label Review</p>
+      <h1>Label Verification</h1>
+      <p class="lede">
+        Check an alcohol beverage label against TTB requirements &mdash; brand, alcohol content,
+        required information, and the Government Warning &mdash; in seconds.
+      </p>
+    </div>
 
-  <main>
+    <nav class="tabs" role="tablist" aria-label="Verification mode">
+      <button class="tab is-active" id="tab-single" role="tab" aria-selected="true">Check one label</button>
+      <button class="tab" id="tab-batch" role="tab" aria-selected="false">Check many labels</button>
+    </nav>
+
     <!-- ============ SINGLE ============ -->
-    <section id="panel-single" class="panel">
+    <section id="panel-single" class="panel" role="tabpanel" aria-labelledby="tab-single">
       <div class="step">
         <h2><span class="num">1</span> Choose what to check</h2>
         <div class="mode-toggle" role="radiogroup" aria-label="Verification mode">
           <label class="mode-option is-active">
             <input type="radio" name="mode" value="rules" checked />
             <span class="mode-title">Check the label is complete</span>
-            <span class="mode-help">Confirms the warning and required info are present and correct.</span>
+            <span class="mode-help">Confirms the warning and required information are present and correct.</span>
           </label>
           <label class="mode-option">
             <input type="radio" name="mode" value="compare" />
             <span class="mode-title">Compare to the application</span>
-            <span class="mode-help">Type what the application says; we flag anything that doesn't match.</span>
+            <span class="mode-help">Type what the application says; we flag anything that doesn&rsquo;t match.</span>
           </label>
         </div>
       </div>
 
       <div class="step" id="expected-step" hidden>
-        <h2><span class="num">2</span> Type the application details</h2>
+        <h2><span class="num">2</span> Enter the application details</h2>
         <p class="hint">Fill in only what you want checked. Leave the rest blank.</p>
         <div class="fields">
           <label>Brand name<input type="text" id="exp-brand_name" /></label>
@@ -53,9 +106,14 @@
         <h2><span class="num" id="upload-num">2</span> Add the label photo</h2>
         <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Add label image">
           <input type="file" id="file-single" accept="image/*" hidden />
-          <img id="preview" class="preview" alt="" hidden />
+          <img id="preview" class="preview" alt="Selected label" hidden />
           <div id="dropzone-empty" class="dropzone-empty">
-            <span class="dz-icon">📷</span>
+            <span class="dz-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15.5V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/>
+                <path d="M4 15.5v3a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-3"/>
+              </svg>
+            </span>
             <span class="dz-text">Click to choose a photo, or drag one here</span>
           </div>
         </div>
@@ -68,14 +126,20 @@
     </section>
 
     <!-- ============ BATCH ============ -->
-    <section id="panel-batch" class="panel" hidden>
+    <section id="panel-batch" class="panel" role="tabpanel" aria-labelledby="tab-batch" hidden>
       <div class="step">
         <h2><span class="num">1</span> Add label photos</h2>
         <p class="hint">Up to 300 at once. Each is checked for completeness and a correct warning.</p>
         <div class="dropzone" id="dropzone-batch" tabindex="0" role="button" aria-label="Add label images">
           <input type="file" id="file-batch" accept="image/*" multiple hidden />
           <div class="dropzone-empty">
-            <span class="dz-icon">🗂️</span>
+            <span class="dz-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 15.5V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/>
+                <path d="M4 15.5v3a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5v-3"/>
+                <path d="M8 2.5h8" opacity=".55"/>
+              </svg>
+            </span>
             <span class="dz-text" id="batch-count-text">Click to choose photos, or drag them here</span>
           </div>
         </div>
@@ -84,7 +148,7 @@
       <div class="step">
         <h2><span class="num">2</span> Application list <span class="optional">(optional)</span></h2>
         <p class="hint">
-          Add a CSV of what each application says and we'll compare every matching label to it.
+          Add a CSV of what each application says and we&rsquo;ll compare every matching label to it.
           Columns: <code>filename, brand_name, class_type, alcohol_content, net_contents, producer, country_of_origin</code>.
           Labels with no matching row are just checked for completeness.
           <a href="/manifest_template.csv" download>Download a template</a>.
@@ -100,16 +164,23 @@
       <div id="batch-status" class="status" hidden></div>
       <div id="batch-summary" class="batch-summary" hidden></div>
       <div id="batch-toolbar" class="toolbar" hidden>
-        <button id="download-csv" class="secondary-btn">⬇︎ Download results (CSV)</button>
-        <button id="print-results" class="secondary-btn">🖨 Print</button>
+        <button id="download-csv" class="secondary-btn">Download results (CSV)</button>
+        <button id="print-results" class="secondary-btn">Print</button>
       </div>
       <div id="batch-result" class="result" hidden></div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <span id="backend-note"></span>
-    Prototype — no images are stored.
+    <div class="container site-footer__inner">
+      <div class="site-footer__id">
+        <span class="site-footer__agency">Alcohol and Tobacco Tax and Trade Bureau</span>
+        <span class="site-footer__dept">U.S. Department of the Treasury &middot; Prototype</span>
+      </div>
+      <p class="site-footer__note">
+        <span id="backend-note"></span>Demonstration system. No images are stored; nothing connects to a live TTB or Treasury network.
+      </p>
+    </div>
   </footer>
 
   <script src="/app.js"></script>

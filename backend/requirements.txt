@@ -7,3 +7,5 @@ rapidfuzz==3.11.0
 pydantic==2.10.5
 pytest==8.3.4
 httpx==0.28.1
+# Optional: only needed when WARNING_CROSSCHECK=on (Amazon Textract warning cross-check).
+boto3==1.35.90
