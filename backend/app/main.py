@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -15,10 +15,22 @@ from .config import settings
 from .extraction import get_backend
 from .extraction.base import LabelExtraction
 from .manifest import match_expected, parse_manifest
+from .ratelimit import enforce_rate_limit
 from .rules import EXTRACTION_FIELDS
 from .schemas import BatchItem, BatchResponse, Verdict
 
 app = FastAPI(title="TTB Label Verification", version="1.0.0")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    if not request.url.path.startswith("/api/"):
+        # Frontend assets: force revalidation so agents see new UI right after a deploy.
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
@@ -48,6 +60,7 @@ def _validate_image(data: bytes, content_type: Optional[str]) -> None:
 
 @app.post("/api/verify", response_model=Verdict)
 async def verify(
+    request: Request,
     image: UploadFile = File(...),
     mode: str = Form("rules"),
     brand_name: Optional[str] = Form(None),
@@ -59,6 +72,7 @@ async def verify(
 ) -> Verdict:
     if mode not in ("compare", "rules"):
         raise HTTPException(status_code=400, detail="mode must be 'compare' or 'rules'.")
+    enforce_rate_limit(request, images=1)
 
     data = await image.read()
     _validate_image(data, image.content_type)
@@ -80,6 +94,7 @@ async def verify(
 
 @app.post("/api/verify-batch", response_model=BatchResponse)
 async def verify_batch(
+    request: Request,
     images: list[UploadFile] = File(...),
     mode: str = Form("rules"),
     manifest: Optional[UploadFile] = File(None),
@@ -90,6 +105,8 @@ async def verify_batch(
         raise HTTPException(
             status_code=413, detail=f"Batch limited to {MAX_BATCH_FILES} images."
         )
+    # A batch spends one rate-limit unit per image (each is a paid vision call).
+    enforce_rate_limit(request, images=len(images))
 
     # If a manifest CSV is supplied, each matching image is compared to its row
     # (compare mode); unmatched images fall back to rule-check.

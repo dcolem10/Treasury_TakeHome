@@ -82,6 +82,21 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/RULES.md`](docs/RULES
 | **Bad photos** | Angled/glare/dim images are read with a quality note; truly unreadable ones get a clear "resubmit" message, not a crash. |
 | **Firewall** in production | Cloud backend is swappable for a local Tesseract backend via `EXTRACTION_BACKEND`. |
 
+## Security posture (public prototype)
+
+- **Rate limiting** — per-client sliding window measured in *images processed* (each image is
+  a paid vision call): default 400 images / 10 minutes, tunable via `RATE_LIMIT_IMAGES` /
+  `RATE_LIMIT_WINDOW_S`. Over-budget requests get `429` with `Retry-After`.
+- **Prompt-injection containment** — label text is treated as untrusted data: the extraction
+  prompt refuses embedded instructions, output is schema-parsed JSON with length caps, and
+  pass/fail is computed **deterministically in Python** — a hostile label can misdescribe
+  itself, but it cannot alter the rules, and the warning check always compares against the
+  statutory text server-side.
+- **Headers & caching** — `nosniff`, frame-deny, and `no-cache` on frontend assets (fresh UI
+  after every deploy).
+- **No persistence / no auth** — nothing is stored; a real deployment would add agency SSO,
+  audit logging, and a shared rate-limit store. Documented, not built.
+
 ## Assumptions & limitations
 
 - **Cloud for the prototype.** Production needs an on-prem/air-gapped model behind the same

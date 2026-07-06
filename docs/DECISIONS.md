@@ -30,6 +30,25 @@ Append new decisions at the top. Each entry: context → decision → consequenc
   not reliably recoverable from OCR text, so the prototype enforces ALL-CAPS prefix + exact
   wording and notes bold as a known limitation.
 
+## D9 — Public-prototype abuse defenses: weighted rate limiting + injection hardening
+- **Context:** The deployed URL is unauthenticated and every image triggers a paid vision
+  call; a single batch request can spend 300 calls. Label images are untrusted input that
+  could carry printed prompt-injection text.
+- **Decision:**
+  - Per-client sliding-window rate limit measured in **images, not requests**
+    (default 400 images / 10 min, env-tunable via `RATE_LIMIT_IMAGES` /
+    `RATE_LIMIT_WINDOW_S`; fits one full 300-label batch plus singles). 429 + Retry-After.
+  - Extraction prompt explicitly treats image text as data, never instructions; extracted
+    fields are length-capped (1000 chars). The existing architecture already bounds injection
+    impact: the model has no tools, output is schema-parsed JSON, and verdicts are computed
+    deterministically in Python — a hostile label can at worst misdescribe itself, and the
+    strict warning validator still compares against the statutory text server-side.
+  - Security headers (nosniff, frame-deny) and `Cache-Control: no-cache` on frontend assets
+    so agents see the new UI immediately after a redeploy.
+- **Consequence:** Cost exposure is capped per client per window. In-memory limiter is
+  per-container (fine at scale=1; a shared store would be needed for multi-node). X-Forwarded-For
+  is trusted for client identity because Lightsail's LB sets it.
+
 ## D8 — Warning prominence is a "warn", not a hard fail
 - **Context:** Jenny flagged people shrinking/burying/de-bolding the warning. TTB requires
   bold + minimum type size, but we can't measure millimeters from a photo, and bold/size
